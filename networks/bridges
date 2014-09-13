@@ -1,5 +1,5 @@
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
-Relay = Node(tag="r", relay=1, torrc="relay.tmpl")
+Relay = Node(tag="r", relay=1, torrc="exit.tmpl")
 Client = Node(tag="c", torrc="client.tmpl")
 
 BridgeAuthority = Node(tag="ba", authority=1, bridgeauthority=1,

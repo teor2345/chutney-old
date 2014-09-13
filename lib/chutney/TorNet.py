@@ -495,9 +495,27 @@ class LocalNodeController(NodeController):
                 sys.exit(0)
             else:
                 raise
+
         # XXXX this requires that RunAsDaemon is set.
         p.wait()
-        if p.returncode != 0:
+        
+        # XXXX this does not require RunAsDaemon to be set, but is slower.
+        
+        # poll() only catches failures before the call itself
+        # so let's sleep a little first
+        # this does, of course, slow down process launch
+        # which can require an adjustment to the voting interval
+
+        # avoid writing a newline or space
+        #sys.stdout.write('.')
+        #sys.stdout.flush()
+        
+        #time.sleep(0.1)
+        #p.poll()
+        
+        # XXXX end not RunAsDaemon
+        
+        if p.returncode != None and p.returncode != 0:
             print "Couldn't launch %s (%s): %s" % (self._env['nick'],
                                                    " ".join(cmdline),
                                                    p.returncode)
@@ -668,8 +686,14 @@ class Network(object):
         self.start()
 
     def start(self):
+        # avoid printing a newline
+        #sys.stdout.write("Starting nodes")
+        #sys.stdout.flush()
         print "Starting nodes"
-        return all([n.getController().start() for n in self._nodes])
+        rv = all([n.getController().start() for n in self._nodes])
+        #print ""
+        return rv
+    
 
     def hup(self):
         print "Sending SIGHUP to nodes"

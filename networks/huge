@@ -1,0 +1,8 @@
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority-huge.tmpl")
+Relay = Node(tag="r", relay=1, torrc="relay-huge.tmpl")
+Exit = Node(tag="e", relay=1, torrc="exit-huge.tmpl")
+Client = Node(tag="c", torrc="client-huge.tmpl")
+
+NODES = Authority.getN(3) + Relay.getN(20) + Exit.getN(10) + Client.getN(40)
+
+ConfigureNodes(NODES)
