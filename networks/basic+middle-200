@@ -1,0 +1,15 @@
+# If you get failures, try:
+# ulimit -S -n 512 or similar
+# a longer delay in test-network.sh
+# changing the base socks port so it doesn't conflict with non-test tor ports
+Authority = Node(tag="a", authority=1, relay=1, torrc="authority-huge.tmpl")
+Relay = Node(tag="r", relay=1, torrc="relay-huge.tmpl")
+Exit = Node(tag="e", relay=1, torrc="exit-huge.tmpl")
+Client = Node(tag="c", torrc="client-huge.tmpl")
+
+# Add an extra authority compared to huge
+# Approximate the proportion of exits to relays in the global network
+# Add more clients than there are relays
+NODES = Authority.getN(5) + Relay.getN(75) + Exit.getN(15) + Client.getN(105)
+
+ConfigureNodes(NODES)

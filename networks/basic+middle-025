@@ -1,3 +1,6 @@
+# If you get failures, try:
+# ulimit -S -n 512 or similar
+# a longer delay in test-network.sh
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
 Relay = Node(tag="r", relay=1, torrc="relay.tmpl")
 Exit = Node(tag="e", relay=1, torrc="exit.tmpl")
