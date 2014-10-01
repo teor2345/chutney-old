@@ -24,6 +24,11 @@ flavour=basic; [ -n "$1" ] && { flavour=$1; shift; }
 
 $CHUTNEY stop networks/$flavour
 [ -d net/nodes ] && {
+    # chutney stop may not work if you've changed the network flavour
+    # between start and stop. So we kill all previous tor nodes.
+    # TODO: move this code to chutney itself? (lib/chutney/TorNet.py)
+    echo "$myname: NOTE: killing any leftover tor processes in net/nodes"
+    cat net/nodes/*/pid | xargs kill -KILL
     DEST=net/nodes.$(date +%s)
     echo "$myname: NOTE: renaming net/nodes to $DEST"
     mv net/nodes $DEST
