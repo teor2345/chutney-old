@@ -870,18 +870,17 @@ def usage(network):
 
 
 def exit_on_error(err_msg):
-    print "Error: {0}\n".format(err_msg)
-    print usage(_THE_NETWORK)
+    print("Error: {0}\n".format(err_msg))
+    print(usage(_THE_NETWORK))
     sys.exit(1)
 
-def runConfigFile(verb, path):
+def runConfigFile(verb, f):
     _GLOBALS = dict(_BASE_ENVIRON=_BASE_ENVIRON,
                     Node=Node,
                     ConfigureNodes=ConfigureNodes,
                     _THE_NETWORK=_THE_NETWORK)
 
-    with open(path) as f:
-        data = f.read()
+    data = f.read()
 
     exec(data, _GLOBALS)
     network = _GLOBALS['_THE_NETWORK']
