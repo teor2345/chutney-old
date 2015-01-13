@@ -9,8 +9,6 @@ UseBridges 1
 ${bridges}
 
 # Like TestingClientDownloadSchedule, but for bridge clients
-# Try to download after:
-# the minimum initial consensus time to start with,
-# a few eager fetches,
-# then half the minimum testing consensus interval
-TestingBridgeDownloadSchedule 0, 5
+# Try to download immediately,
+# then a quater of the minimum testing consensus interval
+TestingBridgeDownloadSchedule 0, 2
