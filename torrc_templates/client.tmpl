@@ -10,3 +10,7 @@ SocksPort $socksport
 # then half the minimum testing consensus interval
 TestingClientDownloadSchedule 0, 5
 TestingClientConsensusDownloadSchedule 0, 5
+
+# Speed things up a little more by waiting 1 second (rather than 5)
+# when we have fewer than 16 descriptors to download
+TestingClientMaxIntervalWithoutRequest 1
