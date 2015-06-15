@@ -908,46 +908,195 @@ class Network(object):
         # HSs must have a HiddenServiceDir with
         # "HiddenServicePort <HS_PORT> 127.0.0.1:<LISTEN_PORT>"
         HS_PORT = 5858
-        DATALEN = 10 * 1024               # Octets.
-        TIMEOUT = 3                     # Seconds.
-        with open('/dev/urandom', 'r') as randfp:
-            tmpdata = randfp.read(DATALEN)
+        # The amount of data to send between each source-sink pair
+        # We create a source-sink pair for each client/bridge client,
+        # and a source-sink pair for each hidden service
+        # TODO: data length on command line
+        DATALEN = 5 * 1024 * 1024    # Octets.
+        # TODO: option to connect multiple times per client
+        MULTI_CONNECTION_COUNT = 3   # Repetitions.
+        # TODO: option to send data from each client, not just one client
+        # Do we want every client to connect to every HS, or just one client
+        # to connect to each HS?
+        HS_MULTI_CLIENT = 1
+        # Print a dot each time a sink verifies this much data
+        # We aim to print a dot at least every 10 seconds to appear responsive
+        # As of April 2015, the median bandwidth is 0.004 Gbps = 512kBps
+        # Therefore, a typical, median router sends 5MB every 10 seconds
+        # If we set 1 dot per second as a reasonable maximum, relay boxes
+        # with capacities exceeding:
+        # 0.004Gbps * 10 * 4 tor instances = 0.16 Gbps (or 98th percentile)
+        # would exceed one dot per second, and may need a higher DOTDATALEN
+        # TODO: dot data length on command line
+        DOTDATALEN = 5 * 1024 * 1024 # Octets.
+        TIMEOUT = 3                  # Seconds.
+        # In order to performance test a tor network, we need to transmit
+        # several hundred megabytes of data or more. Passing around this
+        # much data in Python has its own performance impacts, so we provide
+        # a smaller amount of random data instead, and repeat it to DATALEN
+        #
+        # chutney CPU overhead increases as MAX_RANDOMLEN moves further away
+        # from the optimum buffer size in either direction.
+        # The optimum is ~128kB on my machine.
+        # This is likely because chutney uses more CPU:
+        #  * when combining, splitting, & verifying larger buffers, and
+        #  * when sending, receiving, & verifying multiple smaller buffers.
+        #
+        # Memory usage is approximately 2 to 3 times MAX_RANDOMLEN per source:
+        # A 1 to 2 times MAX_RANDOMLEN buffer for sending for each source
+        # A MAX_RANDOMLEN buffer for verifying for each sink
+        # A MAX_RANDOMLEN reference buffer used by all sources/sinks
+        # The larger networks have around 60 clients, which means estimated
+        # chutney buffers of 15-23MB, comparable to a single tor instance.
+        MAX_RANDOMLEN = 128 * 1024   # Octets.
+        if DATALEN > MAX_RANDOMLEN:
+            RANDOMLEN = MAX_RANDOMLEN
+            # round up to the nearest RANDOMLEN
+            reps = (DATALEN + RANDOMLEN - 1) / RANDOMLEN
+        else:
+            RANDOMLEN = DATALEN
+            reps = 1
+        # sanity checks
+        if DATALEN == 0:
+            reps = 0
+        if reps == 0:
+            DATALEN = 0
+        # print a dot after every DOTDATALEN data is verified, rounding up
+        if RANDOMLEN > 0:
+            dot_reps = (DOTDATALEN + RANDOMLEN - 1) / RANDOMLEN
+            with open('/dev/urandom', 'r') as randfp:
+                tmpdata = randfp.read(RANDOMLEN)
+        else:
+            dot_reps = 0
+            tmpdata = {}
+        # make sure we get at least one dot per transmission
+        dot_reps = min(reps, dot_reps)
+        # now make the connections
         bind_to = ('127.0.0.1', LISTEN_PORT)
-        tt = chutney.Traffic.TrafficTester(bind_to, tmpdata, TIMEOUT)
+        tt = chutney.Traffic.TrafficTester(bind_to,
+                                           tmpdata,
+                                           TIMEOUT,
+                                           reps,
+                                           dot_reps)
         client_list = filter(lambda n:
                              n._env['tag'] == 'c' or n._env['tag'] == 'bc',
                              self._nodes)
+        exit_list = filter(lambda n:
+                           ('exit' in n._env.keys()) and n._env['exit'] == 1,
+                           self._nodes)
+        hs_list = filter(lambda n:
+                         n._env['tag'] == 'h',
+                         self._nodes)
         if len(client_list) == 0:
             print("  Unable to verify network: no client nodes available")
             return False
+        if len(exit_list) == 0 and len(hs_list) == 0:
+            print("  Unable to verify network: no exit/hs nodes available")
+            print("  Exit nodes must be declared 'relay=1, exit=1'")
+            print("  HS nodes must be declared 'tag=\"hs\"'")
+            return False
+        # the number of tor nodes in paths which will send DATALEN data
+        # if a node is used in two paths, we count it twice
+        # this is a lower bound, as cannabilised circuits can have an
+        # additional node in the path (or two in the case of a hs)
+        total_path_length = 0
+        # if there are any exits, each client / bridge client transmits
+        # via a path of length 4 (including the client) to an arbitrary exit
+        CLIENT_EXIT_PATH_NODES = 4
+        if len(exit_list) > 0:
+            total_path_length += (len(client_list)
+                                       * CLIENT_EXIT_PATH_NODES
+                                       * MULTI_CONNECTION_COUNT)
+        # upcoming feature: hidden services with shorter paths ("direct")
+        # this is intended to be used by Facebook and the like
+        # an arbitrary client / bridge client transmits via a path of
+        # length 5 (including the client and ds) to each direct service
+        # CLIENT_DS_PATH_NODES = 5
+        # total_path_length += len(ds_list) * CLIENT_DpS_PATH_NODES
+        print("Connecting:")
         # Each client binds directly to 127.0.0.1:LISTEN_PORT via an Exit relay
-        for op in client_list:
-            print("  Exit to %s:%d via client %s:%s"
-                   % ('127.0.0.1', LISTEN_PORT,
-                      'localhost', op._env['socksport']))
-            tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
-                                          ('localhost',
-                                           int(op._env['socksport']))))
+        if len(exit_list) > 0:
+            for op in client_list:
+                print("  Exit to %s:%d via client %s:%s"
+                      % ('127.0.0.1', LISTEN_PORT,
+                         'localhost', op._env['socksport']))
+                for i in range(MULTI_CONNECTION_COUNT):
+                    tt.add(chutney.Traffic.Source(tt,
+                                                  bind_to,
+                                                  tmpdata,
+                                                  ('localhost',
+                                                   int(op._env['socksport'])),
+                                                  reps))
         # The HS redirects .onion connections made to hs_hostname:HS_PORT
         # to the Traffic Tester's 127.0.0.1:LISTEN_PORT
         # We must have at least one working client for the hs test to succeed
-        for hs in filter(lambda n:
-                         n._env['tag'] == 'h',
-                         self._nodes):
+        # an arbitrary client / bridge client transmits via a path of
+        # length 8 (including the client and hs) to each hidden service
+        CLIENT_HS_PATH_NODES = 8
+        hs_path_length = (len(hs_list)
+                          * CLIENT_HS_PATH_NODES
+                          * MULTI_CONNECTION_COUNT)
+        # Each client in hs_client_list connects to each hs
+        if HS_MULTI_CLIENT:
+            hs_client_list = client_list
+            hs_path_length *= len(client_list)
+        else:
+            # only use the first client in the list
+          hs_client_list = client_list[:1]
+        total_path_length += hs_path_length
+        # Setup the connections from each client in hs_client_list to each hs
+        for hs in hs_list:
             # Instead of binding directly to LISTEN_PORT via an Exit relay,
             # we bind to hs_hostname:HS_PORT via a hidden service connection
             # through the first available client
             bind_to = (hs._env['hs_hostname'], HS_PORT)
-            # Just choose the first client
-            client = client_list[0]
-            print("  HS to %s:%d (%s:%d) via client %s:%s"
-                  % (hs._env['hs_hostname'], HS_PORT,
+            for client in hs_client_list:
+                print("  HS to %s:%d (%s:%d) via client %s:%s"
+                      % (hs._env['hs_hostname'], HS_PORT,
                      '127.0.0.1', LISTEN_PORT,
                      'localhost', client._env['socksport']))
-            tt.add(chutney.Traffic.Source(tt, bind_to, tmpdata,
+                for i in range(MULTI_CONNECTION_COUNT):
+                    tt.add(chutney.Traffic.Source(tt,
+                                          bind_to,
+                                          tmpdata,
                                           ('localhost',
-                                           int(client._env['socksport']))))
-        return tt.run()
+                                           int(client._env['socksport'])),
+                                          reps))
+        print("Transmitting Data:")
+        # calculate the single stream bandwidth and overall tor bandwidth
+        # the single stream bandwidth is the bandwidth of the
+        # slowest stream of all the simultaneously transmitted streams
+        # the overall bandwidth estimates the simultaneous bandwidth between
+        # all tor nodes over all simultaneous streams, assuming:
+        # * minimum path lengths (no cannibalized circuits)
+        # * unlimited network bandwidth (that is, localhost)
+        # * tor performance is CPU-limited
+        # This be used to estimate the bandwidth capacity of a CPU-bound
+        # tor relay running on this machine
+        start_time = time.clock()
+        status = tt.run()
+        end_time = time.clock()
+        # if we fail, give up straight away
+        if not status:
+            return status
+        # otherwise, if we sent at least 5 MB cumulative total, and
+        # it took us at least a second to send, report bandwidth
+        MIN_BWDATA = 5 * 1024 * 1024 # Octets.
+        cumulative_data_sent = total_path_length * DATALEN
+        elapsed_time = end_time - start_time
+        if cumulative_data_sent >= MIN_BWDATA and elapsed_time >= 1.0:
+            # Report megabits per second
+            BWDIVISOR = 1024*1024/8
+            single_stream_bandwidth = ((8 * DATALEN)
+                                       / elapsed_time
+                                       / BWDIVISOR)
+            overall_bandwidth = ((8 * cumulative_data_sent)
+                                 / elapsed_time
+                                 / BWDIVISOR)
+            print("Single Stream Bandwidth: %.2f Mbps"
+                  % single_stream_bandwidth)
+            print("Overall tor Bandwidth: %.2f Mbps" % overall_bandwidth)
+        return status
 
 
 def ConfigureNodes(nodelist):

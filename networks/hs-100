@@ -2,9 +2,11 @@
 
 # By default, Authorities are not configured as exits
 Authority = Node(tag="a", authority=1, relay=1, torrc="authority.tmpl")
-ExitRelay = Node(tag="r", relay=1, exit=1, torrc="relay.tmpl")
+NonExitRelay = Node(tag="r", relay=1, torrc="relay-non-exit.tmpl")
 Client = Node(tag="c", torrc="client.tmpl")
+HS = Node(tag="h", hs=1, torrc="hs.tmpl")
 
-NODES = Authority.getN(5) + ExitRelay.getN(35) + Client.getN(60)
+NODES = Authority.getN(5) + NonExitRelay.getN(25) + \
+        Client.getN(10) + HS.getN(60)
 
 ConfigureNodes(NODES)
