@@ -12,9 +12,14 @@ Log notice [rend,bug]info file ${dir}/rsos.log
 
 # Disable preemtive circuits, a RSOS really doesn't need them (except for
 # descriptor posting).
-# For some reason, this causes data transmission to fail, even though it
-# should just work.
+# This stalls at bootstrap due to #17359.
 #__DisablePredictedCircuits 1
+# A workaround is to set:
+LongLivedPorts
+PredictedPortsRelevanceTime 0 seconds
+# LearnCircuitBuildTimeout 0 (set below already)
+# This disables everything except hidden service preemptive 3-hop circuits.
+# See #17360.
 
 # Tor builds circuits to learn the circuit build timeout. But this is
 # incompatible with one-hop circuits. (See options_validate() for details.)
