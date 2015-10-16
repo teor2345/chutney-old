@@ -1,0 +1,35 @@
+${include:hs.tmpl}
+
+# Make every hidden service instance a RSOS
+RendezvousSingleOnionServiceNonAnonymousServer 1
+
+# Log only the messages we need to confirm that the RSOS server is making
+# one-hop circuits, and to see any errors or major issues
+# To confirm one-hop intro and rendezvous circuits, look for
+# rend_service_intro_has_opened and rend_service_rendezvous_has_opened, and
+# check the length of the circuit in the next line.
+Log notice [rend,bug]info file ${dir}/rsos.log
+
+# Disable preemtive circuits, a RSOS really doesn't need them (except for
+# descriptor posting).
+# For some reason, this causes data transmission to fail, even though it
+# should just work.
+#__DisablePredictedCircuits 1
+
+# Tor builds circuits to learn the circuit build timeout. But this is
+# incompatible with one-hop circuits. (See options_validate() for details.)
+# The only timeout a RSOS cares about is the timeout for the 3-hop descriptor
+# posting circuits. It can just use the default value.
+# (And all other RSOS circuits are one-hop.)
+LearnCircuitBuildTimeout 0
+
+# In Tor2Web mode, the hidden service client code makes one-hop circuits and
+# breaks the path bias detector.
+# Let’s not take the risk of single onion services doing that.
+# The drawback of this change is that a RSOS will eventually use every node as
+# the first node in your descriptor posting circuits (and therefore every
+# malicious node gets a chance to de-anonymise you or deny your uploads).
+# This will log a warning that you’re non-anonymous and can be de-anonymised
+# via a simple attack. (But you’re running Single Onion Services, so you can
+# be easily de-anonymised by your intro and rendezvous points anyway.)
+UseEntryGuards 0
