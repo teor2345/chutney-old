@@ -11,7 +11,7 @@ SingleOnion = Node(tag="h", hs=1, torrc="single-onion.tmpl")
 # connections:
 # a minimum path length of 3, plus the client-nominated rendezvous point,
 # plus a seperate introduction point
-NODES = Authority.getN(3) + NonExitRelay.getN(2) + \
+NODES = Authority.getN(2) + NonExitRelay.getN(3) + \
         Client.getN(1) + SingleOnion.getN(1)
 
 ConfigureNodes(NODES)
