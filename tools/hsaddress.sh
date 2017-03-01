@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Usage:
 #    tools/hsaddress.sh [hs_node]
