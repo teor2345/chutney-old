@@ -12,6 +12,10 @@ export CHUTNEY_WARNINGS_SUMMARY=${CHUTNEY_WARNINGS_SUMMARY:-true}
 # default to exiting when this script exits
 export CHUTNEY_CONTROLLING_PID=${CHUTNEY_CONTROLLING_PID:-$$}
 
+# default to no DNS: this is a safe, working default for most users
+# If a custom test expects DNS, it needs to set CHUTNEY_DNS_CONF
+export CHUTNEY_DNS_CONF=${CHUTNEY_DNS_CONF:-/dev/null}
+
 # what we say when we fail
 UPDATE_YOUR_CHUTNEY="Please update your chutney using 'git pull'."
 
@@ -103,6 +107,11 @@ do
       export CHUTNEY_LISTEN_ADDRESS_V6="$2"
       shift
       ;;
+    # The DNS server config for Tor Exits, default is no DNS (/dev/null)
+    --dns-conf)
+      export CHUTNEY_DNS_CONF="$2"
+      shift
+      ;;
     # Warning Options
     # we summarise unexpected warnings by default
     # this shows all warnings per-node
@@ -149,6 +158,10 @@ do
   esac
   shift
 done
+
+# If the DNS server doesn't work, tor exits may reject all exit traffic, and
+# chutney may fail
+echo "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
 
 # optional: $TOR_DIR is the tor build directory
 # it's used to find the location of tor binaries
