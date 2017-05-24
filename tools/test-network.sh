@@ -169,7 +169,9 @@ done
 
 # If the DNS server doesn't work, tor exits may reject all exit traffic, and
 # chutney may fail
-echo "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
+if [ "$CHUTNEY_WARNINGS_ONLY" != true ]; then
+  $ECHO "$myname: using CHUTNEY_DNS_CONF '$CHUTNEY_DNS_CONF'"
+fi
 
 # optional: $TOR_DIR is the tor build directory
 # it's used to find the location of tor binaries
