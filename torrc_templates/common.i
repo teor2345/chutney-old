@@ -58,4 +58,9 @@ ProtocolWarnings 1
 SafeLogging 0
 LogTimeGranularity 1
 
+# PrivCount expire circuits fast
+CircuitBuildTimeout 5
+CircuitIdleTimeout 5
+MaxCircuitDirtiness 10
+
 ${authorities}
