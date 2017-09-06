@@ -347,7 +347,7 @@ if [ "$CHUTNEY_STOP_TIME" -ge 0 ]; then
   # where make hangs if any child processes are still alive
   "$CHUTNEY" stop "$CHUTNEY_NETWORK"
   # Give tor time to exit gracefully
-  sleep 3
+  sleep 5
   "$WARNINGS"
   exit "$VERIFY_EXIT_STATUS"
 else
