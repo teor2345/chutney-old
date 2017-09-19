@@ -58,9 +58,14 @@ ProtocolWarnings 1
 SafeLogging 0
 LogTimeGranularity 1
 
-# PrivCount expire circuits fast
+# PrivCount expire circuits and connections fast
+
+# Causes some tor versions to crash
+LearnCircuitBuildTimeout 0
+
 CircuitBuildTimeout 5
 CircuitIdleTimeout 5
 MaxCircuitDirtiness 10
+TestingDirConnectionMaxStall 5
 
 ${authorities}

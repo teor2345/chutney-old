@@ -66,3 +66,5 @@ We don't have enough votes to generate a consensus
 We only have [1-4] introduction points established for
 You have used DirAuthority or AlternateDirAuthority
 Your log may contain sensitive information
+# PrivCount
+CircuitBuildTimeout is shorter
