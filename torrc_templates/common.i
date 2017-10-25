@@ -64,7 +64,6 @@ LogTimeGranularity 1
 LearnCircuitBuildTimeout 0
 
 CircuitBuildTimeout 5
-CircuitIdleTimeout 5
 MaxCircuitDirtiness 10
 TestingDirConnectionMaxStall 5
 
