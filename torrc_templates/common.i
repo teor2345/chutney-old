@@ -1,3 +1,4 @@
+EnablePrivCount 1
 TestingTorNetwork 1
 
 ## Comprehensive Bootstrap Testing Options ##
