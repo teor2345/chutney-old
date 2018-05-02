@@ -1,3 +1,5 @@
+V3BandwidthsFile /tmp/bwfile
+
 AuthoritativeDirectory 1
 V3AuthoritativeDirectory 1
 ContactInfo auth${nodenum}@test.test
