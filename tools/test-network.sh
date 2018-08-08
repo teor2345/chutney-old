@@ -209,18 +209,19 @@ if [ ! -d "$TOR_DIR" ]; then
         $ECHO "$myname: no \$TOR_DIR, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
         unset TOR_DIR
     fi
-    # Now find the name of the Tor app dir, which changed in Tor 0.3.5
-    if [ -d "$TOR_DIR" ]; then
-        if [ -d "$TOR_DIR/src/app" ]; then
-            $ECHO "$myname: \$TOR_DIR is a Tor 0.3.5 or later build directory"
-            TOR_APP_DIR="$TOR_DIR/src/app"
-        elif [ -d "$TOR_DIR/src/or" ]; then
-            $ECHO "$myname: \$TOR_DIR is a Tor 0.3.4 or earlier build directory"
-            TOR_APP_DIR="$TOR_DIR/src/or"
-        else
-            $ECHO "$myname: \$TOR_DIR has no src/app or src/or, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
-            unset TOR_DIR
-        fi
+fi
+
+# Now find the name of the Tor app dir, which changed in Tor 0.3.5
+if [ -d "$TOR_DIR" ]; then
+    if [ -d "$TOR_DIR/src/app" ]; then
+        $ECHO "$myname: \$TOR_DIR is a Tor 0.3.5 or later build directory"
+        TOR_APP_DIR="$TOR_DIR/src/app"
+    elif [ -d "$TOR_DIR/src/or" ]; then
+        $ECHO "$myname: \$TOR_DIR is a Tor 0.3.4 or earlier build directory"
+        TOR_APP_DIR="$TOR_DIR/src/or"
+    else
+        $ECHO "$myname: \$TOR_DIR has no src/app or src/or, chutney will use \$CHUTNEY_TOR and \$CHUTNEY_TOR_GENCERT as tor binary paths, or search \$PATH for tor binary names"
+        unset TOR_DIR
     fi
 fi
 
