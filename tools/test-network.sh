@@ -302,7 +302,7 @@ else
         export CHUTNEY_TOR_GENCERT="$tor_gencert_name"
     fi
 fi
-echo $ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
+$ECHO "$myname: Using \$CHUTNEY_TOR: '$CHUTNEY_TOR' and \$CHUTNEY_TOR_GENCERT: '$CHUTNEY_TOR_GENCERT'"
 
 # Set the variables for the chutney network flavour
 export NETWORK_FLAVOUR=${NETWORK_FLAVOUR:-"bridges+hs"}
